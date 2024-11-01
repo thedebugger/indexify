@@ -6,6 +6,7 @@ from pydantic import BaseModel
 
 from indexify import (
     Graph,
+    IndexifyClient,
     Pipeline,
     RemoteGraph,
     RemotePipeline,
@@ -118,6 +119,17 @@ class TestGraphBehaviors(unittest.TestCase):
             name="test_simple_function", description="test", start_node=simple_function
         )
         graph = RemoteGraph.deploy(graph)
+        invocation_id = graph.run(block_until_done=True, x=MyObject(x="a"))
+        output = graph.output(invocation_id, "simple_function")
+        self.assertEqual(output, [MyObject(x="ab")])
+
+    def test_simple_function_in_namespace(self):
+        graph = Graph(
+            name="test_simple_function", description="test", start_node=simple_function
+        )
+        client = IndexifyClient(namespace="simple_function_namespace")
+        client.create_namespace("simple_function_namespace")
+        graph = RemoteGraph.deploy(graph, client=client)
         invocation_id = graph.run(block_until_done=True, x=MyObject(x="a"))
         output = graph.output(invocation_id, "simple_function")
         self.assertEqual(output, [MyObject(x="ab")])
